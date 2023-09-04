@@ -553,6 +553,56 @@ public class TTLockPlugin extends CordovaPlugin {
     });
   }
 
+  public void getAdminPasscode(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
+    String lockData = args.getString(0);
+    String lockMac = args.getString(1);
+    if(!FeatureValueUtil.isSupportFeature(lockData, FeatureValue.GET_ADMIN_CODE)){
+       JSONObject resultObj = new JSONObject();
+       resultObj.put("isSupported",false);
+      PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, resultObj);
+      callbackContext.sendPluginResult(pluginResult);
+    } else {
+       mTTLockClient.getAdminPasscode(lockData, lockMac, new GetAdminPasscodeCallback() {
+         @Override
+         public void onGetAdminPasscodeSuccess(String s) {
+           JSONObject resultObj = new JSONObject();
+           try {
+             resultObj.put("isSupported", true);
+             resultObj.put("adminpasscode", s);
+           } catch (JSONException e) {
+             LOG.d(TAG, "getAdminPassCode error = %s", e.toString());
+           }
+           PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, resultObj);
+           callbackContext.sendPluginResult(pluginResult);
+         }
+
+         @Override
+         public void onFail(LockError lockError) {
+           LOG.d(TAG, "getAdminPassCode onFail = %s", lockError.getErrorMsg());
+           callbackContext.error(makeError(lockError));
+         }
+       });
+    }
+  }
+
+  public void modifyAdminPasscode(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
+      String lockData = args.getString(0);
+      String lockMac = args.getString(1);
+      String newAdminPasscode = args.getString(2);
+      mTTLockClient.modifyAdminPasscode(newAdminPasscode, lockData, lockMac, new ModifyAdminPasscodeCallback() {
+        @Override
+        public void onModifyAdminPasscodeSuccess(String s) {
+          callbackContext.success();
+        }
+
+        @Override
+        public void onFail(LockError lockError) {
+          LOG.d(TAG, "modifyAdminPassCode onFail = %s", lockError.getErrorMsg());
+          callbackContext.error(makeError(lockError));
+        }
+      });
+  }
+
   public void lock_BatteryLevel(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
     String lockData = args.getString(0);
     String lockMac = args.getString(1);
