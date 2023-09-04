@@ -558,7 +558,7 @@ public class TTLockPlugin extends CordovaPlugin {
     String lockMac = args.getString(1);
     if(!FeatureValueUtil.isSupportFeature(lockData, FeatureValue.GET_ADMIN_CODE)){
        JSONObject resultObj = new JSONObject();
-       resultObj.put("isSupported",false);
+       resultObj.put("isSupported","false");
       PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, resultObj);
       callbackContext.sendPluginResult(pluginResult);
     } else {
@@ -567,7 +567,7 @@ public class TTLockPlugin extends CordovaPlugin {
          public void onGetAdminPasscodeSuccess(String s) {
            JSONObject resultObj = new JSONObject();
            try {
-             resultObj.put("isSupported", true);
+             resultObj.put("isSupported", "true");
              resultObj.put("adminpasscode", s);
            } catch (JSONException e) {
              LOG.d(TAG, "getAdminPassCode error = %s", e.toString());

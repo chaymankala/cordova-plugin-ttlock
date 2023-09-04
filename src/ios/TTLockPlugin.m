@@ -411,6 +411,45 @@
   ];
 }
 
+- (void)lock_modifyAdminPasscode:(CDVInvokedUrlCommand *)command {
+  NSString *lockData = (NSString *)[command argumentAtIndex:0];
+  NSString *lockMac = (NSString *)[command argumentAtIndex:1];
+  NSString *newAdminPasscode = (NSString *)[command argumentAtIndex:2];
+  [TTLock modifyAdminPasscode:newAdminPasscode lockData:lockData success:^{
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  } failure:^(TTError errorCode, NSString *errorMsg) {
+    NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  }];
+}
+
+- (void)lock_getAdminPasscode:(CDVInvokedUrlCommand *)command {
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    BOOL isSupportAdminPasscode = [TTUtil lockFeatureValue:lockData suportFunction:TTLockFeatureValueGetAdminPasscode];
+  if(!isSupportAdminPasscode){
+    NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+     @"false", @"isSupported",
+    nil];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  } else {
+    [TTLock getAdminPasscodeWithLockData:lockData success:^(NSString *adminPasscode) {
+      NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+       @"true", @"isSupported",
+       adminPasscode, @"adminpasscode",
+      nil];
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+      NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
+  }
+}
+
 - (void)lock_modifyPasscode:(CDVInvokedUrlCommand *)command {
   NSString *oldPasscode = (NSString *)[command argumentAtIndex:0];
   NSString *newPasscode = (NSString *)[command argumentAtIndex:1];
