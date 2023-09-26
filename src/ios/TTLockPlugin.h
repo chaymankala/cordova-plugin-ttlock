@@ -31,6 +31,8 @@
 - (void)lock_modifyPasscode:(CDVInvokedUrlCommand *)command;
 - (void)lock_deletePasscode:(CDVInvokedUrlCommand *)command;
 - (void)lock_resetPasscode:(CDVInvokedUrlCommand *)command;
+- (void)lock_modifyAdminPasscode:(CDVInvokedUrlCommand *)command;
+- (void)lock_getAdminPasscode:(CDVInvokedUrlCommand *)command;
 
 - (void)lock_addICCard:(CDVInvokedUrlCommand *)command;
 - (void)lock_modifyICCardValidityPeriod:(CDVInvokedUrlCommand *)command;

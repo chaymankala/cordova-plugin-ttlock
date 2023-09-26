@@ -66,6 +66,12 @@
     getBatteryLevel: function getBatteryLevel(lockData, lockMac) {
       return exec("lock_BatteryLevel", [lockData, lockMac]);
     },
+    getAdminPasscode: function getAdminPasscode(lockData, lockMac) {
+      return exec("lock_getAdminPasscode", [lockData, lockMac]);
+    },
+    modifyAdminPasscode: function modifyAdminPasscode(lockData, lockMac, newAdminPasscode) {
+      return exec("lock_modifyAdminPasscode", [lockData, lockMac, newAdminPasscode]);
+    },
     addFingerprint: function addFingerprint(
       startDate,
       endDate,
