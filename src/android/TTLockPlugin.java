@@ -60,7 +60,10 @@ import com.ttlock.bl.sdk.api.TTLockClient;
 import com.ttlock.bl.sdk.api.ExtendedBluetoothDevice;
 import com.ttlock.bl.sdk.api.LockDfuClient;
 import com.ttlock.bl.sdk.callback.ClearPassageModeCallback;
+import com.ttlock.bl.sdk.callback.GetAdminPasscodeCallback;
+import com.ttlock.bl.sdk.callback.ModifyAdminPasscodeCallback;
 import com.ttlock.bl.sdk.callback.SetPassageModeCallback;
+import com.ttlock.bl.sdk.constant.FeatureValue;
 import com.ttlock.bl.sdk.entity.LockError;
 import com.ttlock.bl.sdk.constant.ControlAction;
 import com.ttlock.bl.sdk.entity.ControlLockResult;
@@ -1305,3 +1308,4 @@ public class TTLockPlugin extends CordovaPlugin {
     return context;
   }
 }
+
