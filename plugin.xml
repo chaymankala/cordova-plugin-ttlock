@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="kiot-cordova-plugin-ttlock" version="0.0.7">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="kiot-cordova-plugin-ttlock" version="0.0.8">
 
   <name>TTLock</name>
   <description>TTLock SDK Plugin</description>
@@ -45,8 +45,14 @@
     <header-file src="src/ios/TTLockPlugin.h" />
     <source-file src="src/ios/TTLockPlugin.m" />
 
-    <framework src="src/ios/TTLock.framework" custom="true" />
-    <framework src="src/ios/TTLockGateway.framework" custom="true" />
+    <!-- Removing framework and adding pods deps -->
+
+    <!-- <framework src="src/ios/TTLock.framework" custom="true" /> -->
+    <!-- <framework src="src/ios/TTLockGateway.framework" custom="true" /> -->
+
+     <framework src="TTLock" type="podspec" />
+     <framework src="TTLockGateway" type="podspec" />
+    
     <framework src="CoreBluetooth.framework" />
   </platform>
 
