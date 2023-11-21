@@ -25,6 +25,9 @@ var Lock = {
   stopScan: function stopScan() {
     return exec("lock_stopScan", []);
   },
+  stopRemoteScan: function stopRemoteScan() {
+    return exec("lock_stopRemoteScan", []);
+  },
   init: function init(lockMac, lockName, lockVersion) {
     return exec("lock_init", [lockMac, lockName, lockVersion]);
   },

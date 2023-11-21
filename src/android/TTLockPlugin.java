@@ -373,6 +373,12 @@ public class TTLockPlugin extends CordovaPlugin {
     callbackContext.success();
   }
 
+   public void lock_stopRemoteScan(CordovaArgs args, CallbackContext callbackContext) {
+    mRemoteIsScanning = false;
+    mRemoteClient.stopScan();
+    callbackContext.success();
+  }
+
   public void remote_init(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
     String remote = args.getString(0);
     String lockData = args.getString(1);
