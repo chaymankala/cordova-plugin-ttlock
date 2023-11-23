@@ -68,7 +68,8 @@ import com.ttlock.bl.sdk.callback.ModifyAdminPasscodeCallback;
 import com.ttlock.bl.sdk.callback.ModifyRemoteValidityPeriodCallback;
 import com.ttlock.bl.sdk.callback.SetPassageModeCallback;
 import com.ttlock.bl.sdk.constant.FeatureValue;
-import com.ttlock.bl.sdk.device.WirelessKeyFob;
+import com.ttlock.bl.sdk.device.Remote;
+import com.ttlock.bl.sdk.entity.FirmwareInfo;
 import com.ttlock.bl.sdk.entity.LockError;
 import com.ttlock.bl.sdk.constant.ControlAction;
 import com.ttlock.bl.sdk.entity.ControlLockResult;
@@ -77,10 +78,12 @@ import com.ttlock.bl.sdk.entity.PassageModeConfig;
 import com.ttlock.bl.sdk.entity.PassageModeType;
 import com.ttlock.bl.sdk.entity.ValidityInfo;
 import com.ttlock.bl.sdk.remote.api.RemoteClient;
+import com.ttlock.bl.sdk.remote.callback.GetRemoteSystemInfoCallback;
 import com.ttlock.bl.sdk.remote.callback.InitRemoteCallback;
 import com.ttlock.bl.sdk.remote.callback.ScanRemoteCallback;
 import com.ttlock.bl.sdk.remote.model.InitRemoteResult;
 import com.ttlock.bl.sdk.remote.model.RemoteError;
+import com.ttlock.bl.sdk.remote.model.SystemInfo;
 import com.ttlock.bl.sdk.util.GsonUtil;
 import com.ttlock.bl.sdk.util.SpecialValueUtil;
 import com.ttlock.bl.sdk.util.FeatureValueUtil;
@@ -133,8 +136,6 @@ public class TTLockPlugin extends CordovaPlugin {
   private TTLockClient mTTLockClient = TTLockClient.getDefault();
   private LockDfuClient mLockDfuClient = LockDfuClient.getDefault();
   private GatewayClient mGatewayClient = GatewayClient.getDefault();
-
-  private RemoteClient mRemoteClient = RemoteClient.getDefault();
   protected Context context;
 
   // callbacks
@@ -152,7 +153,7 @@ public class TTLockPlugin extends CordovaPlugin {
 
   private Map<String, ExtendedBluetoothDevice> mDevicesCache = new HashMap<String, ExtendedBluetoothDevice>();
 
-  private Map<String, WirelessKeyFob> mRemotesCache = new HashMap<String, WirelessKeyFob>();
+  private Map<String, Remote> mRemotesCache = new HashMap<String, Remote>();
 
   public void onDestroy() {
 
@@ -226,8 +227,8 @@ public class TTLockPlugin extends CordovaPlugin {
   }
 
   public void lock_prepareBTService(CordovaArgs args, CallbackContext callbackContext) {
+    RemoteClient.getDefault().prepareBTService(cordova.getActivity().getApplicationContext());
     mTTLockClient.prepareBTService(cordova.getActivity().getApplicationContext());
-    mRemoteClient.prepareBTService(cordova.getActivity().getApplicationContext());
     callbackContext.success();
   }
 
@@ -242,28 +243,45 @@ public class TTLockPlugin extends CordovaPlugin {
       return;
     }
 
+    RemoteClient.getDefault().stopScan();
+
     mRemoteIsScanning = true;
 
-    mRemoteClient.startScan(new ScanRemoteCallback() {
+    RemoteClient.getDefault().startScan(new ScanRemoteCallback() {
       @Override
-      public void onScanKeyFob(WirelessKeyFob wirelessKeyFob) {
-        LOG.d(TAG, "ScanRemoteCallback device found = %s", wirelessKeyFob);
+      public void onScanRemote(Remote remote) {
+        LOG.d(TAG, "ScanRemoteCallback device found = %s", remote);
+        RemoteClient.getDefault().getRemoteSystemInfo(remote.getAddress(), new GetRemoteSystemInfoCallback() {
+          @Override
+          public void onGetRemoteSystemInfoSuccess(SystemInfo systemInfo) {
+            LOG.d(TAG, "startScanLock error = %s", systemInfo);
+            mRemotesCache.put(remote.getAddress(), remote);
+            JSONObject remoteObj = new JSONObject();
+            try {
+              remoteObj.put("name", remote.getName());
+              remoteObj.put("address", remote.getAddress());
+              remoteObj.put("number", remote.getNumber());
+              // remoteObj.put("version", wirelessKeyFob.getLockVersionJson());
+              remoteObj.put("isSettingMode", remote.isSettingMode());
+              remoteObj.put("electricQuantity", remote.getBatteryCapacity());
+              remoteObj.put("rssi", remote.getRssi());
+              remoteObj.put("modelNum", systemInfo.getModelNum());
+              remoteObj.put("hardwareRevision", systemInfo.getHardwareRevision());
+              remoteObj.put("firmwareRevision", systemInfo.getFirmwareRevision());
+            } catch (Exception e) {
+              LOG.d(TAG, "startScanLock error = %s", e.toString());
+            }
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, remoteObj);
+            callbackContext.sendPluginResult(pluginResult);
+            RemoteClient.getDefault().stopScan();
+          }
 
-        mRemotesCache.put(wirelessKeyFob.getAddress(), wirelessKeyFob);
-        JSONObject remoteObj = new JSONObject();
-        try {
-          remoteObj.put("name", wirelessKeyFob.getName());
-          remoteObj.put("address", wirelessKeyFob.getAddress());
-         // remoteObj.put("version", wirelessKeyFob.getLockVersionJson());
-          remoteObj.put("isSettingMode", wirelessKeyFob.isSettingMode());
-          remoteObj.put("electricQuantity", wirelessKeyFob.getBatteryCapacity());
-          remoteObj.put("rssi", wirelessKeyFob.getRssi());
-        } catch (Exception e) {
-          LOG.d(TAG, "startScanLock error = %s", e.toString());
-        }
-        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, remoteObj);
-        pluginResult.setKeepCallback(true);
-        callbackContext.sendPluginResult(pluginResult);
+          @Override
+          public void onFail(RemoteError remoteError) {
+            LOG.d(TAG, "ScanLockCallback device found error = %s", remoteError);
+            callbackContext.error(String.valueOf(remoteError));
+          }
+        });
       }
 
     });
@@ -375,24 +393,31 @@ public class TTLockPlugin extends CordovaPlugin {
 
    public void lock_stopRemoteScan(CordovaArgs args, CallbackContext callbackContext) {
     mRemoteIsScanning = false;
-    mRemoteClient.stopScan();
+     RemoteClient.getDefault().stopScan();
     callbackContext.success();
   }
 
   public void remote_init(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
     String remote = args.getString(0);
     String lockData = args.getString(1);
+    Long startDate = args.getLong(2);
+    Long endDate = args.getLong(3);
 
-    WirelessKeyFob _remote = mRemotesCache.get(remote);
+    Remote _remote = mRemotesCache.get(remote);
     LOG.d(TAG, "initRemote = %s", _remote.toString());
-    mRemoteClient.initialize(_remote, lockData, new InitRemoteCallback() {
+    RemoteClient.getDefault().stopScan();
+    RemoteClient.getDefault().initialize(_remote, lockData, new InitRemoteCallback() {
       @Override
       public void onInitSuccess(InitRemoteResult initRemoteResult) {
         ValidityInfo validityInfo = new ValidityInfo();
+        validityInfo.setModeType(1);
+        validityInfo.setStartDate(startDate);
+        validityInfo.setEndDate(endDate);
         mTTLockClient.addRemote(_remote.getAddress(), validityInfo , lockData, new AddRemoteCallback() {
           @Override
           public void onAddSuccess() {
-            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "Success");
+            LOG.d(TAG, "initLock onFail = %s", "success");
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "success");
             callbackContext.sendPluginResult(pluginResult);
           }
 
@@ -414,6 +439,33 @@ public class TTLockPlugin extends CordovaPlugin {
     });
   }
 
+  public void lock_firmwareRemote(CordovaArgs args, CallbackContext callbackContext) throws JSONException{
+
+    String remote = args.getString(0);
+    String lockData = args.getString(1);
+
+    Remote _remote = mRemotesCache.get(remote);
+    JSONObject remoteObj = new JSONObject();
+
+    RemoteClient.getDefault().getRemoteSystemInfo(_remote.getAddress(), new GetRemoteSystemInfoCallback() {
+    @Override
+    public void onGetRemoteSystemInfoSuccess(SystemInfo systemInfo) {
+      try {
+        remoteObj.put("modelNum", systemInfo.getModelNum());
+        remoteObj.put("hardwareRevision", systemInfo.getHardwareRevision());
+        remoteObj.put("firmwareRevision", systemInfo.getFirmwareRevision());
+      } catch (JSONException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    @Override
+    public void onFail(RemoteError remoteError) {
+      LOG.d(TAG, "initLock onFail = %s", remoteError);
+      callbackContext.error(String.valueOf(remoteError));
+    }
+  });
+  }
   public void lock_init(CordovaArgs args, CallbackContext callbackContext) throws JSONException {
     String lockMac = args.getString(0);
     String lockName = args.getString(1);
