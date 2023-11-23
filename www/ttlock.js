@@ -10,17 +10,29 @@
     isScanning: function isScanning() {
       return exec("lock_isScanning", []);
     },
+    isRemoteScanning: function isRemoteScanning() {
+    return exec("remote_isScanning", []);
+    },
     createNotificationChannel: function createNotificationChannel(channelConfig) {
       return exec("createNotificationChannel", [channelConfig]);
     },
     startScan: function startScan(resolve, reject) {
       return cordova.exec(resolve, reject, pluginName, "lock_startScan", []);
     },
+    startRemoteScan: function startRemoteScan(resolve, reject) {
+      return cordova.exec(resolve, reject, pluginName, "remote_startScan", []);
+    },
     stopScan: function stopScan() {
       return exec("lock_stopScan", []);
     },
+    stopRemoteScan: function stopRemoteScan() {
+      return exec("lock_stopRemoteScan", []);
+    },
     init: function init(lockMac, lockName, lockVersion) {
       return exec("lock_init", [lockMac, lockName, lockVersion]);
+    },
+    remoteInit: function remoteInit(remote, lockData, startDate, endDate) {
+      return exec("remote_init", [remote, lockData, startDate, endDate]);
     },
     reset: function reset(lockData, lockMac) {
       return exec("lock_reset", [lockData, lockMac]);
@@ -92,6 +104,17 @@
     },
     getAllValidFingerprints: function getAllValidFingerprints(lockData, lockMac) {
       return exec("lock_getAllValidFingerprints", [lockData, lockMac]);
+      },
+    deleteRemote: function deleteRemote(
+    remoteMac,
+    lockData
+    ){
+      return exec("lock_deleteRemote", [remoteMac, lockData]);
+    },
+    clearRemote: function clearRemote(
+    lockData
+    ){
+      return exec("lock_clearRemote", [lockData]);
     },
     deleteFingerprint: function deleteFingerprint(
       fingerprintNum,
@@ -102,6 +125,13 @@
     },
     clearAllFingerprints: function clearAllFingerprints(lockData, lockMac) {
       return exec("lock_clearAllFingerprints", [lockData, lockMac]);
+    },
+    modifyRemoteValidityPeriod: function modifyRemoteValidityPeriod(validityInfo, remoteMac, lockData){
+      return exec("lock_modifyRemoteValidityPeriod", [
+      validityInfo,
+      remoteMac,
+      lockData
+      ]);
     },
     modifyFingerprintValidityPeriod: function modifyFingerprintValidityPeriod(
       startDate,
@@ -338,5 +368,4 @@
     DoorGoOut: 32,
   };
   
-  module.exports = TTLock;
-
+  module.exports = TTLock;  
