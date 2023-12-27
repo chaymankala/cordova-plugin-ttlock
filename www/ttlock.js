@@ -335,8 +335,8 @@
     };
   } else {
     TTLock.LogType = {
-      All: 11,
-      New: 12,
+      All: 1,
+      New: 0,
     };
   }
   
