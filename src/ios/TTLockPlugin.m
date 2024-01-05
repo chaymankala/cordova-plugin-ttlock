@@ -248,7 +248,8 @@
 }
 
 - (void)lock_getOperationLog:(CDVInvokedUrlCommand *)command {
-  TTOperateLogType logType = (TTOperateLogType)[NSNumber numberWithInteger:[command argumentAtIndex:0]];
+  NSString *type = (NSString *)[command argumentAtIndex:0];
+  TTOperateLogType logType = [type integerValue];
   NSString *lockData = (NSString *)[command argumentAtIndex:1];
 
   [TTLock getOperationLogWithType:logType lockData:lockData
