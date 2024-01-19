@@ -5,6 +5,22 @@
 
 }
 
+// Public static method
++ (TTLockPlugin*) ttLockPlugin;
+
+@property (nonatomic) CDVInvokedUrlCommand* myCDVCommand;
+
+// A public instance method
++ (void)voipToken: (NSString*)token;
++ (void)voipPayload: (NSDictionary*)payload;
++ (CDVInvokedUrlCommand*)cdvCommand;
+
+- (void)voip_init:(CDVInvokedUrlCommand *)command;
+- (void)voip_pushToken:(CDVInvokedUrlCommand *)command;
+- (void)voip_getNotificationData:(CDVInvokedUrlCommand *)command;
+- (void)voip_endCall:(CDVInvokedUrlCommand *)command;
+- (void)voip_getNotificationData_internal;
+
 - (void)lock_setupBluetooth:(CDVInvokedUrlCommand *)command;
 - (void)lock_isScanning:(CDVInvokedUrlCommand *)command;
 - (void)lock_startScan:(CDVInvokedUrlCommand *)command;

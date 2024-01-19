@@ -1,6 +1,88 @@
 #import "TTLockPlugin.h"
+#import <CallKit/CallKit.h>
+
 
 @implementation TTLockPlugin
+
+// Private static reference
+static TTLockPlugin* ttLockPlugin;
+static NSString* voipToken;
+static NSDictionary* voipPayload;
+static CDVInvokedUrlCommand* myCDVCommand;
+
+// Public static method
++ (TTLockPlugin*) ttLockPlugin {
+    return ttLockPlugin;
+}
+
++ (CDVInvokedUrlCommand*) cdvCommand {
+    return myCDVCommand;
+}
+
+// implement CDVPlugin delegate
+- (void)pluginInitialize {
+    ttLockPlugin = self;
+}
+
+// A public instance method
++ (void)voipToken: (NSString*)token
+{
+    NSLog(@"MyPlugin: %@", token);
+    voipToken = token;
+}
+
++ (void)voipPayload:(NSDictionary *)payload
+{
+    voipPayload = payload;
+}
+
+- (void)voip_endCall:(CDVInvokedUrlCommand *)command {
+    NSString *callId = (NSString *)[command argumentAtIndex:0];
+    NSUUID *callUUID = [[NSUUID alloc] initWithUUIDString:callId];
+    CXEndCallAction *endCallAction = [[CXEndCallAction alloc] initWithCallUUID:callUUID];
+    CXTransaction *transaction = [[CXTransaction alloc] init];
+    [transaction addAction:endCallAction];
+
+    CXCallController *callController = [[CXCallController alloc] init];
+    [callController requestTransaction:transaction completion:^(NSError * _Nullable error) {
+        if (error) {
+            NSLog(@"Error ending call: %@", error.localizedDescription);
+            // Handle the error if needed
+        } else {
+            NSLog(@"Call ended successfully.");
+            // Perform any additional cleanup or post-call logic
+        }
+    }];
+}
+
+- (void)voip_pushToken:(CDVInvokedUrlCommand *)command {
+    CDVPluginResult* pluginResult = nil;
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:voipToken];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)voip_getNotificationData:(CDVInvokedUrlCommand *)command {
+    if (myCDVCommand == nil) {
+        CDVPluginResult* pluginResult = nil;
+        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                     messageAsDictionary:voipPayload];
+        [pluginResult setKeepCallbackAsBool:true];
+        _myCDVCommand = command;
+        myCDVCommand = command;  
+    }
+//    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    
+}
+
+- (void)voip_getNotificationData_internal {
+    CDVPluginResult* pluginResult = nil;
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
+                                 messageAsDictionary:voipPayload];
+    [pluginResult setKeepCallbackAsBool:true];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:_myCDVCommand.callbackId];
+    
+}
+
 
 - (void)lock_isScanning:(CDVInvokedUrlCommand *)command {
   CDVPluginResult* pluginResult = nil;

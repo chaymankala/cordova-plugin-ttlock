@@ -4,6 +4,21 @@
     });
   };
   const pluginName = 'TTLockPlugin';
+
+  var VoIP = {
+    init: function init() {
+      return exec("voip_init", []);
+    },
+    pushToken: function pushToken() {
+      return exec("voip_pushToken", []);
+    },
+    endCall: function endCall(callId) {
+      return exec("voip_endCall", [callId]);
+    },
+    getNotificationData: function getNotificationData(resolve,reject) {
+      return cordova.exec(resolve, reject, pluginName, "voip_getNotificationData", []);
+    }
+  }
   
   var Lock = {
     // Universal
@@ -33,6 +48,9 @@
     },
     remoteInit: function remoteInit(remote, lockData, startDate, endDate) {
       return exec("remote_init", [remote, lockData, startDate, endDate]);
+    },
+    firmwareRemote: function firmwareRemote(remote, lockData) {
+      return exec("lock_firmwareRemote", [remote, lockData]);
     },
     reset: function reset(lockData, lockMac) {
       return exec("lock_reset", [lockData, lockMac]);
@@ -305,6 +323,7 @@
   var TTLock = {
     Lock: Lock,
     Gateway: Gateway,
+    VoIP: VoIP,
   };
   
   if (navigator.platform === "iPhone") {
