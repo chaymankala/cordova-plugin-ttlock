@@ -62,13 +62,18 @@ import com.ttlock.bl.sdk.api.LockDfuClient;
 import com.ttlock.bl.sdk.callback.AddRemoteCallback;
 import com.ttlock.bl.sdk.callback.ClearPassageModeCallback;
 import com.ttlock.bl.sdk.callback.ClearRemoteCallback;
+import com.ttlock.bl.sdk.callback.ConfigServerCallback;
+import com.ttlock.bl.sdk.callback.ConfigWifiCallback;
 import com.ttlock.bl.sdk.callback.DeleteRemoteCallback;
 import com.ttlock.bl.sdk.callback.GetAdminPasscodeCallback;
+import com.ttlock.bl.sdk.callback.GetWifiInfoCallback;
 import com.ttlock.bl.sdk.callback.ModifyAdminPasscodeCallback;
 import com.ttlock.bl.sdk.callback.ModifyRemoteValidityPeriodCallback;
+import com.ttlock.bl.sdk.callback.ScanWifiCallback;
 import com.ttlock.bl.sdk.callback.SetPassageModeCallback;
 import com.ttlock.bl.sdk.constant.FeatureValue;
 import com.ttlock.bl.sdk.device.Remote;
+import com.ttlock.bl.sdk.device.TTDevice;
 import com.ttlock.bl.sdk.entity.FirmwareInfo;
 import com.ttlock.bl.sdk.entity.LockError;
 import com.ttlock.bl.sdk.constant.ControlAction;
@@ -77,6 +82,7 @@ import com.ttlock.bl.sdk.constant.Feature;
 import com.ttlock.bl.sdk.entity.PassageModeConfig;
 import com.ttlock.bl.sdk.entity.PassageModeType;
 import com.ttlock.bl.sdk.entity.ValidityInfo;
+import com.ttlock.bl.sdk.entity.WifiLockInfo;
 import com.ttlock.bl.sdk.remote.api.RemoteClient;
 import com.ttlock.bl.sdk.remote.callback.GetRemoteSystemInfoCallback;
 import com.ttlock.bl.sdk.remote.callback.InitRemoteCallback;
@@ -326,6 +332,100 @@ public class TTLockPlugin extends CordovaPlugin {
         callbackContext.error(makeError(error));
       }
     });
+  }
+
+  public void lock_getWifi (CordovaArgs args, CallbackContext callbackContext) throws
+          JSONException {
+     String lockData = args.getString(0);
+     mTTLockClient.getWifiInfo(lockData, new GetWifiInfoCallback() {
+       @Override
+       public void onGetWiFiInfoSuccess(WifiLockInfo wifiLockInfo) {
+         JSONObject wifiObj = new JSONObject();
+         try {
+           wifiObj.put("mac", wifiLockInfo.getWifiMac());
+           wifiObj.put("rssi", wifiLockInfo.getWifiRssi());
+         } catch (Exception e) {
+           LOG.d(TAG, "startScanLock error = %s", e.toString());
+         }
+         PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, wifiObj);
+         callbackContext.sendPluginResult(pluginResult);
+       }
+
+       @Override
+       public void onFail(LockError error) {
+         LOG.d(TAG, "GetWifiCallback device found error = %s", error.getErrorMsg());
+         callbackContext.error(makeError(error));
+       }
+     });
+  }
+
+  public void lock_configWifi (CordovaArgs args, CallbackContext callbackContext) throws
+    JSONException {
+    String wifiName = args.getString(0);
+    String wifiPassword = args.getString(1);
+    String lockData = args.getString(2);
+
+    mTTLockClient.configWifi(wifiName, wifiPassword, lockData, new ConfigWifiCallback() {
+      @Override
+      public void onConfigWifiSuccess() {
+        mTTLockClient.configServer("wifilock.ttlock.com", 4999, lockData, new ConfigServerCallback() {
+          @Override
+          public void onConfigServerSuccess() {
+            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "success");
+            callbackContext.sendPluginResult(pluginResult);
+          }
+
+          @Override
+          public void onFail(LockError error) {
+            LOG.d(TAG, "ConfigWifiCallback device found error = %s", error.getErrorMsg());
+            callbackContext.error(makeError(error));
+          }
+        });
+      }
+
+      @Override
+      public void onFail(LockError error) {
+        LOG.d(TAG, "ConfigWifiCallback device found error = %s", error.getErrorMsg());
+        callbackContext.error(makeError(error));
+      }
+    });
+  }
+  public void lock_scanWifi (CordovaArgs args, CallbackContext callbackContext) throws
+    JSONException {
+       String lockData = args.getString(0);
+
+       mTTLockClient.scanWifi(lockData, new ScanWifiCallback() {
+         @Override
+         public void onScanWifi(List<WiFi> list, int i) {
+           try{
+           // Create a JSON array to hold the Wi-Fi list
+           JSONArray wifiArray = new JSONArray();
+           // Iterate over the list of Wi-Fi objects
+           for (WiFi wifi : list) {
+             // Create a JSON object for each Wi-Fi item
+             JSONObject wifiObject = new JSONObject();
+               wifiObject.put("ssid", wifi.getSsid());
+               wifiObject.put("rssi", wifi.getRssi());
+             // Add more fields as needed
+
+             // Add the JSON object to the array
+             wifiArray.put(wifiObject);
+           }
+             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, wifiArray);
+             pluginResult.setKeepCallback(true);
+             callbackContext.sendPluginResult(pluginResult);
+           } catch (JSONException e) {
+             // Handle the exception
+             callbackContext.error("Failed to parse Wi-Fi list: " + e.getMessage());
+           }
+         }
+
+         @Override
+         public void onFail(LockError error) {
+           LOG.d(TAG, "ScanWifiCallback device found error = %s", error.getErrorMsg());
+           callbackContext.error(makeError(error));
+         }
+       });
   }
 
   public void lock_updateCheck (CordovaArgs args, CallbackContext callbackContext) throws

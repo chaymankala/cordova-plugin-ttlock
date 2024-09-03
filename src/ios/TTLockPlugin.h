@@ -36,6 +36,8 @@
 - (void)lock_getRemoteUnlockSwitchState:(CDVInvokedUrlCommand *)command;
 - (void)lock_getOperationLog:(CDVInvokedUrlCommand *)command;
 - (void)lock_BatteryLevel:(CDVInvokedUrlCommand *)command;
+- (void)lock_scanWifi:(CDVInvokedUrlCommand *)command;
+- (void)lock_configWifi:(CDVInvokedUrlCommand *)command;
 
 - (void)lock_addFingerprint:(CDVInvokedUrlCommand *)command;
 - (void)lock_deleteFingerprint:(CDVInvokedUrlCommand *)command;

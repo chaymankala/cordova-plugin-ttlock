@@ -118,6 +118,45 @@ static CDVInvokedUrlCommand* myCDVCommand;
   }];
 }
 
+- (void)lock_configWifi:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_configwifi  ##############");
+    NSString *wifiName = (NSString *)[command argumentAtIndex:0];
+    NSString *wifiPassword = (NSString *)[command argumentAtIndex:1];
+    NSString *lockData = (NSString *)[command argumentAtIndex:2];
+    
+    [TTLock configWifiWithSSID:wifiName wifiPassword:wifiPassword lockData:lockData success:^{
+        [TTLock configServerWithServerAddress:@"wifilock.ttlock.com" portNumber: @"4999" lockData:lockData success:^{
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        } failure:^(TTError errorCode, NSString *errorMsg) {
+            NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            NSLog(@"lock_configwifi %@",errorMsg);
+        }];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_configwifi %@",errorMsg);
+    }];
+}
+
+- (void)lock_scanWifi:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_scanwifi  ##############");
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    [TTLock scanWifiWithLockData:lockData success:^(BOOL isFinished, NSArray *wifiArr) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:wifiArr];
+        [pluginResult setKeepCallbackAsBool:true];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_scanwifi %@",errorMsg);
+    }];
+}
+
 - (void)lock_stopScan:(CDVInvokedUrlCommand *)command {
   [TTLock stopScan];
   CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];

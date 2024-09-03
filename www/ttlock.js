@@ -34,6 +34,12 @@
     startScan: function startScan(resolve, reject) {
       return cordova.exec(resolve, reject, pluginName, "lock_startScan", []);
     },
+    configWifi: function configWifi(wifiname, wifipassword, lockData) {
+      return exec("lock_configWifi", [wifiname, wifipassword, lockData]);
+    },
+    scanWiFi: function scanWiFi(resolve, reject, lockData) {
+      return cordova.exec(resolve, reject, pluginName, "lock_scanWifi", [lockData]);
+    },
     startRemoteScan: function startRemoteScan(resolve, reject) {
       return cordova.exec(resolve, reject, pluginName, "remote_startScan", []);
     },
