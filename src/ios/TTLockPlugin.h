@@ -38,6 +38,20 @@
 - (void)lock_BatteryLevel:(CDVInvokedUrlCommand *)command;
 - (void)lock_scanWifi:(CDVInvokedUrlCommand *)command;
 - (void)lock_configWifi:(CDVInvokedUrlCommand *)command;
+- (void)lock_setOrientation:(CDVInvokedUrlCommand *)command;
+- (void)lock_getOrientation:(CDVInvokedUrlCommand *)command;
+- (void)lock_addDoorSensor:(CDVInvokedUrlCommand *)command;
+- (void)lock_deleteDoorSensor:(CDVInvokedUrlCommand *)command;
+- (void)door_startScan:(CDVInvokedUrlCommand *)command;
+- (void)lock_stopDoorScan:(CDVInvokedUrlCommand *)command;
+- (void)doorsensor_init:(CDVInvokedUrlCommand *)command;
+- (void)door_isScanning:(CDVInvokedUrlCommand *)command;
+
+- (void)lock_addFace:(CDVInvokedUrlCommand *)command;
+- (void)lock_getAllValidFaces:(CDVInvokedUrlCommand *)command;
+- (void)lock_deleteFace:(CDVInvokedUrlCommand *)command;
+- (void)lock_clearAllFaces:(CDVInvokedUrlCommand *)command;
+- (void)lock_modifyFaceValidityPeriod:(CDVInvokedUrlCommand *)command;
 
 - (void)lock_addFingerprint:(CDVInvokedUrlCommand *)command;
 - (void)lock_deleteFingerprint:(CDVInvokedUrlCommand *)command;
