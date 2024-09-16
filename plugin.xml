@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="kiot-cordova-plugin-ttlock" version="0.0.13">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="kiot-cordova-plugin-ttlock" version="0.0.14">
 
   <name>TTLock</name>
   <description>TTLock SDK Plugin</description>
@@ -14,7 +14,7 @@
   </js-module>
 
   <platform name="android">
-    <framework src="com.ttlock:ttlock:3.3.7" />
+    <framework src="com.ttlock:ttlock:3.5.0" />
     <framework src="com.google.code.gson:gson:2.8.5" />
     <!-- <lib-file src="src/android/libs/gson-2.8.6.jar" /> -->
 
@@ -57,7 +57,7 @@
             <source url="https://cdn.cocoapods.org/"/>
         </config>
         <pods use-frameworks="true">
-            <pod name="TTLock"/>
+            <pod name="TTLock" spec="3.4.3"/>
         </pods>
     </podspec>
      <podspec>

@@ -28,11 +28,35 @@
     isRemoteScanning: function isRemoteScanning() {
     return exec("remote_isScanning", []);
     },
+    isDoorScanning: function isDoorScanning() {
+      return exec("door_isScanning", []);
+    },
     createNotificationChannel: function createNotificationChannel(channelConfig) {
       return exec("createNotificationChannel", [channelConfig]);
     },
     startScan: function startScan(resolve, reject) {
       return cordova.exec(resolve, reject, pluginName, "lock_startScan", []);
+    },
+    configWifi: function configWifi(wifiname, wifipassword, lockData) {
+      return exec("lock_configWifi", [wifiname, wifipassword, lockData]);
+    },
+    scanWiFi: function scanWiFi(resolve, reject, lockData) {
+      return cordova.exec(resolve, reject, pluginName, "lock_scanWifi", [lockData]);
+    },
+    setlockOrientation: function setLockOrientation(direction, lockData) {
+      return exec("lock_setOrientation", [direction, lockData]);
+    },
+    getlockOrientation: function getLockOrientation(lockData) {
+      return exec("lock_getOrientation", [ lockData]);
+    },
+    addDoorSensor: function addDoorSensor(doorMac, lockData) {
+      return exec("lock_addDoorSensor", [doorMac, lockData]);
+    },
+    deleteDoorSensor: function deleteDoorSensor(lockData) {
+      return exec("lock_deleteDoorSensor", [lockData]);
+    },
+    startDoorSensorScan: function startDoorSensorScan(resolve, reject) {
+      return cordova.exec(resolve, reject, pluginName, "door_startScan", []);
     },
     startRemoteScan: function startRemoteScan(resolve, reject) {
       return cordova.exec(resolve, reject, pluginName, "remote_startScan", []);
@@ -43,11 +67,17 @@
     stopRemoteScan: function stopRemoteScan() {
       return exec("lock_stopRemoteScan", []);
     },
+    stopDoorScan: function stopDoorScan() {
+      return exec("lock_stopDoorScan", []);
+    },
     init: function init(lockMac, lockName, lockVersion) {
       return exec("lock_init", [lockMac, lockName, lockVersion]);
     },
     remoteInit: function remoteInit(remote, lockData, startDate, endDate) {
       return exec("remote_init", [remote, lockData, startDate, endDate]);
+    },
+    doorsensorInit: function doorsensorInit(door, lockData) {
+      return exec("doorsensor_init", [door, lockData]);
     },
     firmwareRemote: function firmwareRemote(remote, lockData) {
       return exec("lock_firmwareRemote", [remote, lockData]);
@@ -120,8 +150,23 @@
         lockMac,
       ]);
     },
+    addFace: function addFace(
+      startDate,
+      endDate,
+      lockData,
+      cb
+    ) {
+      return cordova.exec(cb, cb, pluginName, "lock_addFace", [
+        startDate,
+        endDate,
+        lockData,
+      ]);
+    },
     getAllValidFingerprints: function getAllValidFingerprints(lockData, lockMac) {
       return exec("lock_getAllValidFingerprints", [lockData, lockMac]);
+      },
+    getAllValidFaces: function getAllValidFaces(lockData) {
+        return exec("lock_getAllValidFaces", [lockData]);
       },
     deleteRemote: function deleteRemote(
     remoteMac,
@@ -134,6 +179,12 @@
     ){
       return exec("lock_clearRemote", [lockData]);
     },
+    deleteFace: function deleteFace(
+      faceNum,
+      lockData
+    ) {
+      return exec("lock_deleteFace", [faceNum, lockData]);
+    },
     deleteFingerprint: function deleteFingerprint(
       fingerprintNum,
       lockData,
@@ -144,11 +195,27 @@
     clearAllFingerprints: function clearAllFingerprints(lockData, lockMac) {
       return exec("lock_clearAllFingerprints", [lockData, lockMac]);
     },
+    clearAllFaces: function clearAllFaces(lockData) {
+      return exec("lock_clearAllFaces", [lockData]);
+    },
     modifyRemoteValidityPeriod: function modifyRemoteValidityPeriod(validityInfo, remoteMac, lockData){
       return exec("lock_modifyRemoteValidityPeriod", [
       validityInfo,
       remoteMac,
       lockData
+      ]);
+    },
+    modifyFaceValidityPeriod: function modifyFaceValidityPeriod(
+      startDate,
+      endDate,
+      faceNumber,
+      lockData
+    ) {
+      return exec("lock_modifyFaceValidityPeriod", [
+        startDate,
+        endDate,
+        faceNumber,
+        lockData
       ]);
     },
     modifyFingerprintValidityPeriod: function modifyFingerprintValidityPeriod(

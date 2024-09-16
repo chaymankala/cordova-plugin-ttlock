@@ -90,6 +90,12 @@ static CDVInvokedUrlCommand* myCDVCommand;
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)door_isScanning:(CDVInvokedUrlCommand *)command {
+  CDVPluginResult* pluginResult = nil;
+  pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:TTLock.isScanning];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
 - (void)lock_setupBluetooth:(CDVInvokedUrlCommand *)command {
   TTLock.printLog = YES;
   [TTLock setupBluetooth:^(TTBluetoothState state) {
@@ -99,6 +105,22 @@ static CDVInvokedUrlCommand* myCDVCommand;
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsNSInteger:state];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
   }];
+}
+
+- (void)door_startScan:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin door_startScan  ##############");
+    [TTDoorSensor startScanWithSuccess:^(TTDoorSensorScanModel * _Nonnull model) {
+        NSDictionary *device = [NSDictionary dictionaryWithObjectsAndKeys:
+          model.name, @"name",
+          model.mac, @"address",
+        nil];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:device];
+        [pluginResult setKeepCallbackAsBool:true];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTDoorSensorError error) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"error"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)lock_startScan:(CDVInvokedUrlCommand *)command {
@@ -118,10 +140,133 @@ static CDVInvokedUrlCommand* myCDVCommand;
   }];
 }
 
+- (void)lock_getOrientation:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_getOrientation  ##############");
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    [TTLock getUnlockDirectionWithLockData:lockData success:^(TTUnlockDirection direction) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          [NSNumber numberWithInt:direction], @"lockorientation",
+        nil];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_setOrientation %@",errorMsg);    }];
+}
+
+- (void)lock_setOrientation:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_setOrientation  ##############");
+    NSString *direction = (NSString *)[command argumentAtIndex:0];
+    NSString *lockData = (NSString *)[command argumentAtIndex:1];
+    TTUnlockDirection unlockdirection;
+    if ([direction  isEqual: @"1"]) {
+        unlockdirection = TTUnlockDirectionLeft;
+    } else {
+        unlockdirection = TTUnlockDirectionRight;
+    }
+    [TTLock setUnlockDirection:unlockdirection lockData:lockData success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_setOrientation %@",errorMsg);
+    }];
+}
+
+- (void)lock_addDoorSensor:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_addDoorSensor  ##############");
+    NSString *doorMac = (NSString *)[command argumentAtIndex:0];
+    NSString *lockData = (NSString *)[command argumentAtIndex:1];
+    [TTLock addDoorSensorWithDoorSensorMac:doorMac lockData:lockData success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_addDoorSensor %@",errorMsg);
+    }];
+}
+
+- (void)lock_deleteDoorSensor:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_deleteDoorSensor  ##############");
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    [TTLock clearDoorSensorWithLockData:lockData success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_deleteDoorSensor %@",errorMsg);
+    }];
+}
+
+- (void)lock_configWifi:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_configwifi  ##############");
+    NSString *wifiName = (NSString *)[command argumentAtIndex:0];
+    NSString *wifiPassword = (NSString *)[command argumentAtIndex:1];
+    NSString *lockData = (NSString *)[command argumentAtIndex:2];
+    [TTLock configWifiWithSSID:wifiName wifiPassword:wifiPassword lockData:lockData success:^{
+        [TTLock configServerWithServerAddress:@"wifilock.ttlock.com" portNumber: @"4999" lockData:lockData success:^{
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        } failure:^(TTError errorCode, NSString *errorMsg) {
+            NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            NSLog(@"lock_configwifi %@",errorMsg);
+        }];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_configwifi %@",errorMsg);
+    }];
+}
+
+- (void)lock_scanWifi:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_scanwifi  ##############");
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    [TTLock scanWifiWithLockData:lockData success:^(BOOL isFinished, NSArray *wifiArr) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsArray:wifiArr];
+        [pluginResult setKeepCallbackAsBool:true];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_scanwifi %@",errorMsg);
+    }];
+}
+
 - (void)lock_stopScan:(CDVInvokedUrlCommand *)command {
   [TTLock stopScan];
   CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
   [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)lock_stopDoorScan:(CDVInvokedUrlCommand *)command {
+  [TTDoorSensor stopScan];
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)doorsensor_init:(CDVInvokedUrlCommand *)command {
+    NSString *doorMac = (NSString *)[command argumentAtIndex:0];
+    NSString *lockData = (NSString *)[command argumentAtIndex:1];
+    
+    [TTDoorSensor initializeWithDoorSensorMac:doorMac lockData:lockData success:^(int electricQuantity, TTSystemInfoModel * _Nonnull systemModel) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTDoorSensorError error) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"error"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }];
 }
 
 - (void)lock_init:(CDVInvokedUrlCommand *)command {
@@ -350,11 +495,140 @@ static CDVInvokedUrlCommand* myCDVCommand;
   ];
 }
 
+- (void)lock_modifyFaceValidityPeriod:(CDVInvokedUrlCommand *)command {
+    long long startDate = (long long)[[command.arguments objectAtIndex:0] longValue];
+    long long endDate = (long long)[[command.arguments objectAtIndex:1] longValue];
+    NSString *faceNumber = (NSString *)[command argumentAtIndex:2];
+    NSString *lockData = (NSString *)[command argumentAtIndex:3];
+    [TTLock modifyFaceValidityWithCyclicConfig:@[] faceNumber:faceNumber startDate:startDate endDate:endDate lockData:lockData success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          @"error", @"status",
+          [NSNumber numberWithInteger:errorCode], @"error",
+          errorMsg, @"message",
+        nil];
+        // NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_addFace failure %@",errorMsg);
+    }];
+}
+
+- (void)lock_addFace:(CDVInvokedUrlCommand *)command {
+    long long startDate = (long long)[[command.arguments objectAtIndex:0] longValue];
+    long long endDate = (long long)[[command.arguments objectAtIndex:1] longValue];
+    NSString *lockData = (NSString *)[command argumentAtIndex:2];
+    [TTLock addFaceWithCyclicConfig:@[] startDate:startDate endDate:endDate lockData:lockData progress:^(TTAddFaceState state, TTFaceErrorCode faceErrorCode) {
+        NSString *status = @"unknown";
+        NSDictionary *resultDict;
+
+        if (state == 2) {
+          status = @"add";
+        } else if (state == 1) {
+          status = @"collected";
+        } else {
+            status = @"1";
+        }
+
+        resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          status, @"status",
+          [NSNumber numberWithInteger:faceErrorCode], @"description",
+//          [NSNumber numberWithInteger:totalCount], @"totalCount",
+        nil];
+
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [pluginResult setKeepCallbackAsBool:true];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_addFingerprint progress");
+    } success:^(NSString *faceNumber) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          @"finished", @"status",
+         faceNumber, @"faceNumber",
+        nil];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_addFingerprint success");
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          @"error", @"status",
+          [NSNumber numberWithInteger:errorCode], @"error",
+          errorMsg, @"message",
+        nil];
+        // NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_addFace failure %@",errorMsg);
+    }];
+}
+
+- (void)lock_getAllValidFaces:(CDVInvokedUrlCommand *)command {
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    [TTLock getAllValidFacesWithLockData:lockData success:^(NSString *allFacesJsonString) {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:allFacesJsonString];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          @"error", @"status",
+          [NSNumber numberWithInteger:errorCode], @"error",
+          errorMsg, @"message",
+        nil];
+        // NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_getFaces failure %@",errorMsg);
+    }];
+}
+
+- (void)lock_clearAllFaces:(CDVInvokedUrlCommand *)command {
+    NSString *lockData = (NSString *)[command argumentAtIndex:0];
+    [TTLock clearFaceWithLockData:lockData success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          @"error", @"status",
+          [NSNumber numberWithInteger:errorCode], @"error",
+          errorMsg, @"message",
+        nil];
+        // NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_getFaces failure %@",errorMsg);
+    }];
+}
+
+- (void)lock_deleteFace:(CDVInvokedUrlCommand *)command {
+    NSString *faceNumber = (NSString *)[command argumentAtIndex:0];
+    NSString *lockData = (NSString *)[command argumentAtIndex:1];
+    [TTLock deleteFaceNumber:faceNumber lockData:lockData success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [NSDictionary dictionaryWithObjectsAndKeys:
+          @"error", @"status",
+          [NSNumber numberWithInteger:errorCode], @"error",
+          errorMsg, @"message",
+        nil];
+        // NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+
+        NSLog(@"lock_deleteface failure %@",errorMsg);
+    }];
+}
+
 - (void)lock_addFingerprint:(CDVInvokedUrlCommand *)command {
   long long startDate = (long long)[[command.arguments objectAtIndex:0] longValue];
   long long endDate = (long long)[[command.arguments objectAtIndex:1] longValue];
   NSString *lockData = (NSString *)[command argumentAtIndex:2];
-
   [TTLock addFingerprintStartDate:startDate endDate:endDate lockData:lockData
     progress:^(int currentCount, int totalCount) {
       NSString *status = @"unknown";
