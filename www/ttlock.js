@@ -349,6 +349,15 @@
     setupBluetooth: function setupBluetooth() {
       return exec("lock_setupBluetooth", []);
     },
+
+        //misc
+    saveImageBase64ToGallery: function saveImageBase64ToGallery(base64Image){
+      return exec("misc_saveImageBase64ToGallery", [base64Image]);
+    },
+    saveVideoToGallery: function saveVideoToGallery(base64Video){
+      return exec("misc_saveVideoToGallery", [base64Video]);
+    }
+
   };
   var Gateway = {
     isBLEEnabled: function isBLEEnabled() {

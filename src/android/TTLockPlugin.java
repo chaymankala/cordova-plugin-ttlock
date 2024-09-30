@@ -39,8 +39,14 @@ import android.content.IntentFilter;
 import android.os.Handler;
 import android.os.Build;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
+
 import android.provider.Settings;
 import android.telecom.Call;
+
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaArgs;
@@ -56,7 +62,12 @@ import org.json.JSONException;
 import com.google.gson.Gson;
 
 import java.util.*;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import com.ttlock.bl.sdk.api.TTLockClient;
 import com.ttlock.bl.sdk.api.ExtendedBluetoothDevice;
@@ -1927,5 +1938,110 @@ public class TTLockPlugin extends CordovaPlugin {
 
     return context;
   }
+
+  public void misc_saveVideoToGallery(CordovaArgs args, CallbackContext callbackContext) throws Exception {
+
+    String base64Video = args.getString(0);
+    // Get current date and time
+    LocalDateTime now = LocalDateTime.now();
+
+    // Define a format pattern
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-ddHH:mm:ss");
+
+    // Format the date and time as a string
+    String formattedDateTime = now.format(formatter);
+    String title = "S_HUB_CAP_" + formattedDateTime + ".mp4";
+
+    ContentResolver contentResolver = cordova.getContext().getContentResolver();
+    ContentValues values = new ContentValues();
+
+    // Set image details
+    values.put(MediaStore.MediaColumns.DISPLAY_NAME, title);
+    values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4"); // Assuming JPEG format
+    values.put(MediaStore.MediaColumns.DESCRIPTION, "saved from streamhub");
+    values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_MOVIES); // For Android 10 and above
+    // values.put(MediaStore.Video.Media.IS_PENDING, 1);
+
+    try {
+      byte[] videoBytes = Base64.getDecoder().decode(base64Video.getBytes());
+
+      // Insert the image into MediaStore
+      Uri uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+
+      if (uri != null) {
+        // convertBase64WebMToMP4(cordova.getContext(), base64Video);
+        OutputStream outputStream = contentResolver.openOutputStream(uri);
+        if (outputStream != null) {
+          InputStream inputStream = new ByteArrayInputStream(videoBytes);
+          byte[] buffer = new byte[1024];
+          int length;
+          while ((length = inputStream.read(buffer)) > 0) {
+            outputStream.write(buffer, 0, length);
+          }
+          outputStream.flush();
+          outputStream.close();
+          inputStream.close();
+          // values.put(MediaStore.Video.Media.IS_PENDING, 0);
+        }
+      }
+      PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
+      callbackContext.sendPluginResult(pluginResult);
+    } catch (Exception e) {
+      e.printStackTrace();
+      callbackContext.error(e.toString());
+    }
+  }
+
+  public void misc_saveImageBase64ToGallery(CordovaArgs args, CallbackContext callbackContext) throws Exception {
+
+    String base64Image = args.getString(0);
+    // Get current date and time
+    LocalDateTime now = LocalDateTime.now();
+
+    // Define a format pattern
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-ddHH:mm:ss");
+
+    // Format the date and time as a string
+    String formattedDateTime = now.format(formatter);
+    String title = "S_HUB_CAP_"+formattedDateTime+".jpg";
+
+    ContentResolver contentResolver = cordova.getContext().getContentResolver();
+    ContentValues values = new ContentValues();
+
+    // Set image details
+    values.put(MediaStore.Images.Media.DISPLAY_NAME, title);
+    values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");  // Assuming JPEG format
+    values.put(MediaStore.Images.Media.DESCRIPTION, "saved from streamhub");
+    values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);  // For Android 10 and above
+
+    try {
+      // Decode Base64 string to byte array
+      byte[] imageBytes = new byte[base64Image.getBytes().length * 100];
+
+      Base64.getDecoder().decode(base64Image.getBytes(), imageBytes);
+
+      // Convert byte array to Bitmap
+      Bitmap bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+
+    // Insert the image into MediaStore
+    Uri uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+
+      if (uri != null) {
+        OutputStream outputStream = contentResolver.openOutputStream(uri);
+        if (outputStream != null) {
+          // Compress the bitmap into the output stream
+          bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+          outputStream.flush();
+          outputStream.close();
+        }
+      }
+      PluginResult pluginResult = new PluginResult(PluginResult.Status.OK);
+      callbackContext.sendPluginResult(pluginResult);
+    } catch (Exception e) {
+      e.printStackTrace();
+      callbackContext.error(e.toString());
+    }
+  }
+
 }
 
