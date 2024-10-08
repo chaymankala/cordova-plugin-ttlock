@@ -1,5 +1,6 @@
 #import "TTLockPlugin.h"
 #import <CallKit/CallKit.h>
+#import <Photos/Photos.h>
 
 
 @implementation TTLockPlugin
@@ -74,6 +75,7 @@ static CDVInvokedUrlCommand* myCDVCommand;
     
 }
 
+
 - (void)voip_getNotificationData_internal {
     CDVPluginResult* pluginResult = nil;
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK
@@ -81,6 +83,187 @@ static CDVInvokedUrlCommand* myCDVCommand;
     [pluginResult setKeepCallbackAsBool:true];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:_myCDVCommand.callbackId];
     
+}
+//- (void)misc_saveVideoToGallery:(CDVInvokedUrlCommand*)command {
+//    NSString *base64Video = [command.arguments objectAtIndex:0]; // Get the base64 video string from args
+//    
+//    // Decode the Base64 string into NSData
+//    NSData *videoData = [[NSData alloc] initWithBase64EncodedString:base64Video options:NSDataBase64DecodingIgnoreUnknownCharacters];
+//    
+//    // Debugging: Check if the video data is valid
+//    if (videoData.length == 0) {
+//        NSLog(@"Error: The Base64 video data is empty or invalid.");
+//        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Invalid video data."];
+//        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//        return;
+//    }
+//    
+//    // Get current date and time for unique video name
+//    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+//    [formatter setDateFormat:@"yyyy-MM-ddHH:mm:ss"];
+//    NSString *formattedDateTime = [formatter stringFromDate:[NSDate date]];
+//    
+//    // Set the video file name
+//    NSString *title = [NSString stringWithFormat:@"S_HUB_CAP_%@.mp4", formattedDateTime];
+//    
+//    // Get a path to save the video temporarily
+//    NSString *tempDirectory = NSTemporaryDirectory();
+//    NSString *filePath = [tempDirectory stringByAppendingPathComponent:title];
+//    NSURL *fileURL = [NSURL fileURLWithPath:filePath];
+//    
+//    // Write the video data to the temporary file
+//    NSError *error = nil;
+//    [videoData writeToURL:fileURL options:NSDataWritingAtomic error:&error];
+//    
+//    if (error) {
+//        NSLog(@"Error writing video to file: %@", error.localizedDescription);
+//        // Send error result to the callback
+//        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+//        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//        return;
+//    }
+//    
+//    // Debugging: Check if the file was written correctly
+//    NSLog(@"Video file written to: %@", fileURL.path);
+//    
+//    // Now try to read the file's properties (e.g., codec) using AVAsset
+//    AVURLAsset *asset = [AVURLAsset URLAssetWithURL:fileURL options:nil];
+//    NSArray *tracks = [asset tracksWithMediaType:AVMediaTypeVideo];
+//    
+//    if (tracks.count == 0) {
+//        NSLog(@"Error: No video tracks found in the video file.");
+//        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No video tracks found."];
+//        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//        return;
+//    }
+//    
+//    AVAssetTrack *videoTrack = [tracks firstObject];
+//    
+//    // Debugging: Get the codec details using videoTrack's format description
+//    NSArray *formatDescriptions = videoTrack.formatDescriptions;
+//    if (formatDescriptions.count > 0) {
+//        CMFormatDescriptionRef formatDescription = (__bridge CMFormatDescriptionRef)(formatDescriptions[0]);
+//        
+//        // Get the media subtype (codec type)
+//        FourCharCode codecType;
+//        CMFormatDescriptionGetMediaSubType(formatDescription);
+//        NSString *codecString = [NSString stringWithFormat:@"0x%08x", codecType];
+//        
+//        NSLog(@"Video Format (Codec): %@", codecString);
+//    } else {
+//        NSLog(@"Error: No format descriptions found for the video track.");
+//    }
+//    
+//    // Request authorization to access the Photos library
+//    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+//        // Create a video request and save the video to the gallery
+//        PHAssetCreationRequest *creationRequest = [PHAssetCreationRequest creationRequestForAsset];
+//        [creationRequest addResourceWithType:PHAssetResourceTypeVideo fileURL:fileURL options:nil];
+//    } completionHandler:^(BOOL success, NSError * _Nullable error) {
+//        // Check the completion result
+//        if (success) {
+//            NSLog(@"Video saved successfully.");
+//            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Video saved successfully."];
+//            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//        } else {
+//            NSLog(@"Error saving video to gallery: %@", error.localizedDescription);
+//            // Send error result to the callback
+//            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+//            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+//        }
+//    }];
+//}
+
+
+- (void)misc_saveVideoToGallery:(CDVInvokedUrlCommand*)command {
+    NSString *base64Video = [command.arguments objectAtIndex:0]; // Get the base64 video string from args
+    
+    // Decode the Base64 string into NSData
+    NSData *videoData = [[NSData alloc] initWithBase64EncodedString:base64Video options:NSDataBase64DecodingIgnoreUnknownCharacters];
+    
+    // Get current date and time for unique video name
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-ddHH:mm:ss"];
+    NSString *formattedDateTime = [formatter stringFromDate:[NSDate date]];
+    
+    // Set the video file name
+    NSString *title = [NSString stringWithFormat:@"S_HUB_CAP_%@.mp4", formattedDateTime];
+    
+    // Get a path to save the video temporarily
+    NSString *tempDirectory = NSTemporaryDirectory();
+    NSString *filePath = [tempDirectory stringByAppendingPathComponent:title];
+    NSURL *fileURL = [NSURL fileURLWithPath:filePath];
+    
+    // Write the video data to the temporary file
+    NSError *error = nil;
+    [videoData writeToURL:fileURL options:NSDataWritingAtomic error:&error];
+    
+    if (error) {
+        NSLog(@"Error writing video to file: %@", error.localizedDescription);
+        // Send error result to the callback
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        return;
+    }
+  
+    
+    // Request authorization to access the Photos library
+    [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+        // Create a video request and save the video to the gallery
+        PHAssetCreationRequest *creationRequest = [PHAssetCreationRequest creationRequestForAsset];
+        [creationRequest addResourceWithType:PHAssetResourceTypeVideo fileURL:fileURL options:nil];
+    } completionHandler:^(BOOL success, NSError * _Nullable error) {
+        // Check the completion result
+        if (success) {
+            // Send success result to the callback
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"Video saved successfully."];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        } else {
+            NSLog(@"Error saving video to gallery: %@", error.localizedDescription);
+            // Send error result to the callback
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }
+    }];
+}
+
+
+- (void)misc_saveImageBase64ToGallery:(CDVInvokedUrlCommand*)command {
+    // Get the base64 image string from the arguments
+    NSString* base64Image = [command.arguments objectAtIndex:0];
+
+    // Convert Base64 string to NSData
+    NSData *imageData = [[NSData alloc] initWithBase64EncodedString:base64Image options:0];
+
+    // Create UIImage from NSData
+    UIImage *image = [UIImage imageWithData:imageData];
+
+    if (image) {
+        // Request authorization to access the photo library if needed
+        [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
+            if (status == PHAuthorizationStatusAuthorized) {
+                // Save the image to the photo library
+                [[PHPhotoLibrary sharedPhotoLibrary] performChanges:^{
+                    PHAssetCreationRequest *creationRequest = [PHAssetCreationRequest creationRequestForAssetFromImage:image];
+                    creationRequest.creationDate = [NSDate date]; // Set the creation date for the image
+                } completionHandler:^(BOOL success, NSError * _Nullable error) {
+                    CDVPluginResult* pluginResult;
+                    if (success) {
+                        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                    } else {
+                        pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+                    }
+                    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+                }];
+            } else {
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Access to photo library was denied."];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+        }];
+    } else {
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Invalid image data."];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
 }
 
 
