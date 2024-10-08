@@ -21,6 +21,8 @@
 - (void)voip_endCall:(CDVInvokedUrlCommand *)command;
 - (void)voip_getNotificationData_internal;
 
+- (void)misc_saveImageBase64ToGallery:(CDVInvokedUrlCommand *)command;
+- (void)misc_saveVideoToGallery:(CDVInvokedUrlCommand *)command;
 - (void)lock_setupBluetooth:(CDVInvokedUrlCommand *)command;
 - (void)lock_isScanning:(CDVInvokedUrlCommand *)command;
 - (void)lock_startScan:(CDVInvokedUrlCommand *)command;
