@@ -111,7 +111,7 @@ static CDVInvokedUrlCommand* myCDVCommand;
     if (error) {
         NSLog(@"Error writing video to file: %@", error.localizedDescription);
         // Send error result to the callback
-        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+        CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to save video, make sure that photos permissions are enabled in app settings"];
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         return;
     }
@@ -131,7 +131,7 @@ static CDVInvokedUrlCommand* myCDVCommand;
         } else {
             NSLog(@"Error saving video to gallery: %@", error.localizedDescription);
             // Send error result to the callback
-            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+            CDVPluginResult *pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unable to save video, make sure that photos permissions are enabled in app settings"];
             [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
         }
     }];
