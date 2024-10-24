@@ -1,6 +1,6 @@
 {
   "name": "kiot-cordova-plugin-ttlock",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "description": "TTLock SDK Plugin",
   "scripts": {
     "build": "parcel build -t browser --no-minify --no-cache --public-url '.' --out-dir www/ src/browser/ttlock.coffee"
