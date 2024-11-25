@@ -1964,7 +1964,7 @@ public class TTLockPlugin extends CordovaPlugin {
     // Set image details
     values.put(MediaStore.MediaColumns.DISPLAY_NAME, title);
     values.put(MediaStore.MediaColumns.MIME_TYPE, "video/mp4"); // Assuming JPEG format
-    values.put(MediaStore.MediaColumns.DESCRIPTION, "saved from streamhub");
+    // values.put(MediaStore.MediaColumns.DESCRIPTION, "saved from streamhub");
     values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_MOVIES); // For Android 10 and above
     // values.put(MediaStore.Video.Media.IS_PENDING, 1);
 
@@ -2017,7 +2017,7 @@ public class TTLockPlugin extends CordovaPlugin {
     // Set image details
     values.put(MediaStore.Images.Media.DISPLAY_NAME, title);
     values.put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg");  // Assuming JPEG format
-    values.put(MediaStore.Images.Media.DESCRIPTION, "saved from streamhub");
+    // values.put(MediaStore.Images.Media.DESCRIPTION, "saved from streamhub");
     values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES);  // For Android 10 and above
 
     try {
