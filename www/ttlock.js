@@ -17,6 +17,9 @@
     },
     getNotificationData: function getNotificationData(resolve,reject) {
       return cordova.exec(resolve, reject, pluginName, "voip_getNotificationData", []);
+    },
+    opennativesettings: function opennativesettings(urlString) {
+      return exec("open_nativesettings", [urlString]);
     }
   }
   

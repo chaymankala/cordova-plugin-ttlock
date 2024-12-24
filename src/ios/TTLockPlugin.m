@@ -62,6 +62,33 @@ static CDVInvokedUrlCommand* myCDVCommand;
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
+- (void)open_nativesettings:(CDVInvokedUrlCommand *)command {
+    NSString* urlString = (NSString *)[command argumentAtIndex:0];
+    NSDictionary* options = @{};
+    if(@available(iOS 10.0, *)){
+        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString] options:options completionHandler:^(BOOL success){
+            if(success){
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+            else {
+                CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to open settings"];
+                [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+            }
+        }];
+    } else {
+        BOOL success = [[UIApplication sharedApplication] openURL:[NSURL URLWithString:urlString]];
+        if(success){
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }
+        else {
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to open settings"];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        }
+    }
+}
+
 - (void)voip_getNotificationData:(CDVInvokedUrlCommand *)command {
     if (myCDVCommand == nil) {
         CDVPluginResult* pluginResult = nil;

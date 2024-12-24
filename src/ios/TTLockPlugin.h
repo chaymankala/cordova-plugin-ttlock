@@ -19,6 +19,7 @@
 - (void)voip_pushToken:(CDVInvokedUrlCommand *)command;
 - (void)voip_getNotificationData:(CDVInvokedUrlCommand *)command;
 - (void)voip_endCall:(CDVInvokedUrlCommand *)command;
+- (void)open_nativesettings:(CDVInvokedUrlCommand *)command;
 - (void)voip_getNotificationData_internal;
 
 - (void)misc_saveImageBase64ToGallery:(CDVInvokedUrlCommand *)command;
