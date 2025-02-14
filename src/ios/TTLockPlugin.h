@@ -42,6 +42,7 @@
 - (void)lock_scanWifi:(CDVInvokedUrlCommand *)command;
 - (void)lock_configWifi:(CDVInvokedUrlCommand *)command;
 - (void)lock_setOrientation:(CDVInvokedUrlCommand *)command;
+- (void)lock_setLockPowerSavingMode:(CDVInvokedUrlCommand *)command;
 - (void)lock_getOrientation:(CDVInvokedUrlCommand *)command;
 - (void)lock_addDoorSensor:(CDVInvokedUrlCommand *)command;
 - (void)lock_deleteDoorSensor:(CDVInvokedUrlCommand *)command;
