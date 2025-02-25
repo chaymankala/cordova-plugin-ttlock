@@ -276,11 +276,32 @@ static CDVInvokedUrlCommand* myCDVCommand;
         NSLog(@"lock_setOrientation %@",errorMsg);    }];
 }
 
+(void)lock_setLockPowerSavingMode:(CDVInvokedUrlCommand *)command {
+    NSLog(@"##############  TTLockPlugin lock_setOrientation  ##############");
+    NSString *direction = (NSString *)[command argumentAtIndex:0];
+    NSString *lockData = (NSString *)[command argumentAtIndex:1];
+    BOOL powerFlag;
+    if ([direction isEqual:@"1"]) {
+        powerFlag = YES;
+    } else {
+        powerFlag = NO;
+    }
+    [TTLock setLockConfigWithType:TTWifiPowerSavingMode on:powerFlag lockData:lockData success:^{
+            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    } failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"lock_setLockPowerSavingMode %@",errorMsg);
+    }];
+}
+
 - (void)lock_setOrientation:(CDVInvokedUrlCommand *)command {
     NSLog(@"##############  TTLockPlugin lock_setOrientation  ##############");
     NSString *direction = (NSString *)[command argumentAtIndex:0];
     NSString *lockData = (NSString *)[command argumentAtIndex:1];
-    TTUnlockDirection unlockdirection;
+    TTUnlockDirection unlockdirection; 
     if ([direction  isEqual: @"1"]) {
         unlockdirection = TTUnlockDirectionLeft;
     } else {

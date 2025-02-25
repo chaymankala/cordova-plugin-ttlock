@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="kiot-cordova-plugin-ttlock" version="0.0.19">
+<plugin xmlns="http://www.phonegap.com/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android" id="kiot-cordova-plugin-ttlock" version="0.0.20">
 
   <name>TTLock</name>
   <description>TTLock SDK Plugin</description>

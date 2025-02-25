@@ -46,6 +46,9 @@
     scanWiFi: function scanWiFi(resolve, reject, lockData) {
       return cordova.exec(resolve, reject, pluginName, "lock_scanWifi", [lockData]);
     },
+    setlockPowerSavingMode: function setlockPowerSavingMode(direction, lockData) {
+      return exec("lock_setLockPowerSavingMode", [direction, lockData]);
+    },
     setlockOrientation: function setLockOrientation(direction, lockData) {
       return exec("lock_setOrientation", [direction, lockData]);
     },
