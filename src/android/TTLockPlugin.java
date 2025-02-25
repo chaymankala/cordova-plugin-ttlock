@@ -496,6 +496,31 @@ public class TTLockPlugin extends CordovaPlugin {
     });
   }
 
+  public void lock_setLockPowerSavingMode (CordovaArgs args, CallbackContext callbackContext) throws
+          JSONException {
+    String direction = args.getString(0);
+    String lockData = args.getString(1);
+    Boolean powerFlag;
+    if(direction.equalsIgnoreCase("1")){
+      powerFlag = true;
+    } else {
+      powerFlag = false;
+    }
+    mTTLockClient.setLockConfig(TTLockConfigType.WIFI_LOCK_POWER_SAVING_MODE, powerFlag, lockData, new SetLockConfigCallback() {
+      @Override
+      public void onSetLockConfigSuccess(TTLockConfigType ttLockConfigType) {
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, "success");
+        callbackContext.sendPluginResult(pluginResult);
+      }
+
+      @Override
+      public void onFail(LockError error) {
+        LOG.d(TAG, "SetUnlockDirectionCallback device found error = %s", error.getErrorMsg());
+        callbackContext.error(makeError(error));
+      }
+    });
+  }
+
   public void lock_setOrientation (CordovaArgs args, CallbackContext callbackContext) throws
           JSONException {
     String direction = args.getString(0);
