@@ -99,6 +99,7 @@ import com.ttlock.bl.sdk.callback.ModifyRemoteValidityPeriodCallback;
 import com.ttlock.bl.sdk.callback.ScanWifiCallback;
 import com.ttlock.bl.sdk.callback.SetPassageModeCallback;
 import com.ttlock.bl.sdk.callback.SetUnlockDirectionCallback;
+import com.ttlock.bl.sdk.callback.SetLockConfigCallback;
 import com.ttlock.bl.sdk.constant.FeatureValue;
 import com.ttlock.bl.sdk.device.Remote;
 import com.ttlock.bl.sdk.device.TTDevice;
