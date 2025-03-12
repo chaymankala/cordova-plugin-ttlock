@@ -276,7 +276,7 @@ static CDVInvokedUrlCommand* myCDVCommand;
         NSLog(@"lock_setOrientation %@",errorMsg);    }];
 }
 
-(void)lock_setLockPowerSavingMode:(CDVInvokedUrlCommand *)command {
+- (void)lock_setLockPowerSavingMode:(CDVInvokedUrlCommand *)command {
     NSLog(@"##############  TTLockPlugin lock_setOrientation  ##############");
     NSString *direction = (NSString *)[command argumentAtIndex:0];
     NSString *lockData = (NSString *)[command argumentAtIndex:1];
