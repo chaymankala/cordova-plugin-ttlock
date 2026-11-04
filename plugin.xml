@@ -14,7 +14,7 @@
   </js-module>
 
   <platform name="android">
-    <framework src="com.ttlock:ttlock:3.5.6" />
+    <framework src="com.ttlock:ttlock:3.5.9" />
     <framework src="com.google.code.gson:gson:2.8.5" />
     <!-- <lib-file src="src/android/libs/gson-2.8.6.jar" /> -->
 
