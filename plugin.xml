@@ -57,7 +57,7 @@
             <source url="https://cdn.cocoapods.org/"/>
         </config>
         <pods use-frameworks="true">
-            <pod name="TTLock" spec="3.4.3"/>
+            <pod name="TTLock" spec="3.6.16"/>
         </pods>
     </podspec>
      <podspec>
