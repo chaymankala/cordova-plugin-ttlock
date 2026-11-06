@@ -10,6 +10,9 @@ static TTLockPlugin* ttLockPlugin;
 static NSString* voipToken;
 static NSDictionary* voipPayload;
 static CDVInvokedUrlCommand* myCDVCommand;
+static BOOL remoteIsScanning = NO;
+// Firmware info returned by remote pairing, so lock_firmwareRemote needn't reconnect to the remote
+static NSMutableDictionary* remoteSystemInfoCache;
 
 // Public static method
 + (TTLockPlugin*) ttLockPlugin {
@@ -1228,6 +1231,115 @@ static CDVInvokedUrlCommand* myCDVCommand;
                 return;
             }
         }];
+}
+
+- (void)remote_isScanning:(CDVInvokedUrlCommand *)command {
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:remoteIsScanning];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)remote_startScan:(CDVInvokedUrlCommand *)command {
+  NSLog(@"##############  TTLockPlugin remote_startScan  ##############");
+  if (remoteIsScanning) {
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Already scanning"];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    return;
+  }
+  remoteIsScanning = YES;
+  // Send the first remote found and stop, without connecting to it: the remote accepts only
+  // one connection in pairing mode, and remote_init needs it. The SDK uses the name as the remote number.
+  [TTWirelessKeyFob startScanWithBlock:^(TTWirelessKeyFobScanModel *model) {
+    [TTWirelessKeyFob stopScan];
+    remoteIsScanning = NO;
+    NSDictionary *remote = [NSDictionary dictionaryWithObjectsAndKeys:
+      model.keyFobName, @"name",
+      model.keyFobMac, @"address",
+      model.keyFobName, @"number",
+      [NSNumber numberWithInteger:model.RSSI], @"rssi",
+    nil];
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:remote];
+    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+  }];
+}
+
+- (void)lock_stopRemoteScan:(CDVInvokedUrlCommand *)command {
+  remoteIsScanning = NO;
+  [TTWirelessKeyFob stopScan];
+  CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)remote_init:(CDVInvokedUrlCommand *)command {
+  NSLog(@"##############  TTLockPlugin remote_init  ##############");
+  NSString *remoteMac = (NSString *)[command argumentAtIndex:0];
+  NSString *lockData = (NSString *)[command argumentAtIndex:1];
+  long long startDate = [[command argumentAtIndex:2] longLongValue];
+  long long endDate = [[command argumentAtIndex:3] longLongValue];
+
+  [TTWirelessKeyFob stopScan];
+  remoteIsScanning = NO;
+  [TTWirelessKeyFob newInitializeWithKeyFobMac:remoteMac lockData:lockData block:^(TTKeyFobStatus status, int electricQuantity, TTSystemInfoModel *systemModel) {
+    if (status != TTKeyFobSuccess) {
+      NSLog(@"remote_init fail status %d", status);
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:[NSString stringWithFormat:@"remote init failed, status %d", status]];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+      return;
+    }
+    if (systemModel != nil) {
+      if (remoteSystemInfoCache == nil) {
+        remoteSystemInfoCache = [NSMutableDictionary dictionary];
+      }
+      remoteSystemInfoCache[remoteMac] = [NSDictionary dictionaryWithObjectsAndKeys:
+        systemModel.modelNum ?: @"", @"modelNum",
+        systemModel.hardwareRevision ?: @"", @"hardwareRevision",
+        systemModel.firmwareRevision ?: @"", @"firmwareRevision",
+        [NSNumber numberWithInt:electricQuantity], @"electricQuantity",
+      nil];
+    }
+    [TTLock addWirelessKeyFobWithCyclicConfig:@[] keyFobMac:remoteMac startDate:startDate endDate:endDate lockData:lockData
+      success:^{
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"success"];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+      }
+      failure:^(TTError errorCode, NSString *errorMsg) {
+        NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+        CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+        [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+        NSLog(@"remote_init addWirelessKeyFob %@", errorMsg);
+      }
+    ];
+  }];
+}
+
+- (void)lock_firmwareRemote:(CDVInvokedUrlCommand *)command {
+  NSString *remoteMac = (NSString *)[command argumentAtIndex:0];
+  // The remote won't accept another connection right after pairing, so use the info pairing returned
+  NSDictionary *cached = remoteSystemInfoCache[remoteMac];
+  CDVPluginResult* pluginResult = nil;
+  if (cached != nil) {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:cached];
+  } else {
+    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"No firmware info, pair the remote first"];
+  }
+  [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+}
+
+- (void)lock_deleteRemote:(CDVInvokedUrlCommand *)command {
+  NSString *remoteMac = (NSString *)[command argumentAtIndex:0];
+  NSString *lockData = (NSString *)[command argumentAtIndex:1];
+
+  [TTLock deleteWirelessKeyFobWithKeyFobMac:remoteMac lockData:lockData
+    success:^{
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+    }
+    failure:^(TTError errorCode, NSString *errorMsg) {
+      NSDictionary *resultDict = [TTLockPlugin makeError:errorCode errorMessage:errorMsg];
+      CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:resultDict];
+      [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
+      NSLog(@"lock_deleteRemote %@", errorMsg);
+    }
+  ];
 }
 
 // Helpers

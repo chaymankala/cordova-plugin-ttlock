@@ -51,6 +51,13 @@
 - (void)doorsensor_init:(CDVInvokedUrlCommand *)command;
 - (void)door_isScanning:(CDVInvokedUrlCommand *)command;
 
+- (void)remote_isScanning:(CDVInvokedUrlCommand *)command;
+- (void)remote_startScan:(CDVInvokedUrlCommand *)command;
+- (void)lock_stopRemoteScan:(CDVInvokedUrlCommand *)command;
+- (void)remote_init:(CDVInvokedUrlCommand *)command;
+- (void)lock_firmwareRemote:(CDVInvokedUrlCommand *)command;
+- (void)lock_deleteRemote:(CDVInvokedUrlCommand *)command;
+
 - (void)lock_addFace:(CDVInvokedUrlCommand *)command;
 - (void)lock_getAllValidFaces:(CDVInvokedUrlCommand *)command;
 - (void)lock_deleteFace:(CDVInvokedUrlCommand *)command;

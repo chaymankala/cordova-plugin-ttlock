@@ -201,6 +201,8 @@ public class TTLockPlugin extends CordovaPlugin {
   private Map<String, ExtendedBluetoothDevice> mDevicesCache = new HashMap<String, ExtendedBluetoothDevice>();
 
   private Map<String, Remote> mRemotesCache = new HashMap<String, Remote>();
+  // Firmware info returned by remote pairing, so lock_firmwareRemote needn't reconnect to the remote
+  private Map<String, SystemInfo> mRemoteSystemInfoCache = new HashMap<String, SystemInfo>();
 
   private  Map<String, WirelessDoorSensor> mDoorsCache = new HashMap<String, WirelessDoorSensor>();
 
@@ -334,37 +336,23 @@ public class TTLockPlugin extends CordovaPlugin {
       @Override
       public void onScanRemote(Remote remote) {
         LOG.d(TAG, "ScanRemoteCallback device found = %s", remote);
-        RemoteClient.getDefault().getRemoteSystemInfo(remote.getAddress(), new GetRemoteSystemInfoCallback() {
-          @Override
-          public void onGetRemoteSystemInfoSuccess(SystemInfo systemInfo) {
-            LOG.d(TAG, "startScanLock error = %s", systemInfo);
-            mRemotesCache.put(remote.getAddress(), remote);
-            JSONObject remoteObj = new JSONObject();
-            try {
-              remoteObj.put("name", remote.getName());
-              remoteObj.put("address", remote.getAddress());
-              remoteObj.put("number", remote.getNumber());
-              // remoteObj.put("version", wirelessKeyFob.getLockVersionJson());
-              remoteObj.put("isSettingMode", remote.isSettingMode());
-              remoteObj.put("electricQuantity", remote.getBatteryCapacity());
-              remoteObj.put("rssi", remote.getRssi());
-              remoteObj.put("modelNum", systemInfo.getModelNum());
-              remoteObj.put("hardwareRevision", systemInfo.getHardwareRevision());
-              remoteObj.put("firmwareRevision", systemInfo.getFirmwareRevision());
-            } catch (Exception e) {
-              LOG.d(TAG, "startScanLock error = %s", e.toString());
-            }
-            PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, remoteObj);
-            callbackContext.sendPluginResult(pluginResult);
-            RemoteClient.getDefault().stopScan();
-          }
-
-          @Override
-          public void onFail(RemoteError remoteError) {
-            LOG.d(TAG, "ScanLockCallback device found error = %s", remoteError);
-            callbackContext.error(String.valueOf(remoteError));
-          }
-        });
+        // No getRemoteSystemInfo here: connecting to the remote before initialize made the
+        // pairing connection time out. Firmware info is read after pairing (lock_firmwareRemote).
+        mRemotesCache.put(remote.getAddress(), remote);
+        JSONObject remoteObj = new JSONObject();
+        try {
+          remoteObj.put("name", remote.getName());
+          remoteObj.put("address", remote.getAddress());
+          remoteObj.put("number", remote.getNumber());
+          remoteObj.put("isSettingMode", remote.isSettingMode());
+          remoteObj.put("electricQuantity", remote.getBatteryCapacity());
+          remoteObj.put("rssi", remote.getRssi());
+        } catch (Exception e) {
+          LOG.d(TAG, "remote_startScan error = %s", e.toString());
+        }
+        PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, remoteObj);
+        callbackContext.sendPluginResult(pluginResult);
+        RemoteClient.getDefault().stopScan();
       }
 
     });
@@ -726,6 +714,9 @@ public class TTLockPlugin extends CordovaPlugin {
     RemoteClient.getDefault().initialize(_remote, lockData, new InitRemoteCallback() {
       @Override
       public void onInitSuccess(InitRemoteResult initRemoteResult) {
+        if (initRemoteResult != null && initRemoteResult.getSystemInfo() != null) {
+          mRemoteSystemInfoCache.put(_remote.getAddress(), initRemoteResult.getSystemInfo());
+        }
         ValidityInfo validityInfo = new ValidityInfo();
         validityInfo.setModeType(1);
         validityInfo.setStartDate(startDate);
@@ -764,6 +755,16 @@ public class TTLockPlugin extends CordovaPlugin {
     Remote _remote = mRemotesCache.get(remote);
     JSONObject remoteObj = new JSONObject();
 
+    // The remote won't accept another connection right after pairing, so use the info pairing returned
+    SystemInfo cached = mRemoteSystemInfoCache.get(_remote.getAddress());
+    if (cached != null) {
+      remoteObj.put("modelNum", cached.getModelNum());
+      remoteObj.put("hardwareRevision", cached.getHardwareRevision());
+      remoteObj.put("firmwareRevision", cached.getFirmwareRevision());
+      callbackContext.success(remoteObj);
+      return;
+    }
+
     RemoteClient.getDefault().getRemoteSystemInfo(_remote.getAddress(), new GetRemoteSystemInfoCallback() {
     @Override
     public void onGetRemoteSystemInfoSuccess(SystemInfo systemInfo) {
@@ -774,6 +775,7 @@ public class TTLockPlugin extends CordovaPlugin {
       } catch (JSONException e) {
         throw new RuntimeException(e);
       }
+      callbackContext.success(remoteObj);
     }
 
     @Override
